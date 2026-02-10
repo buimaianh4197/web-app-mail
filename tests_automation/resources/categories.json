@@ -1,0 +1,24 @@
+[
+  {
+    "name": "Ignored tests",
+    "matchedStatuses": ["skipped"]
+  },
+  {
+    "name": "Infrastructure issues",
+    "matchedStatuses": ["broken", "failed"],
+    "messageRegex": ".*(Timeout|Network|WebDriver).* "
+  },
+  {
+    "name": "Outdated Test Data",
+    "matchedStatuses": ["broken"],
+    "messageRegex": ".*(not found|404|invalid data).*"
+  },
+  {
+    "name": "Product defects",
+    "matchedStatuses": ["failed"]
+  },
+  {
+    "name": "Test defects",
+    "matchedStatuses": ["broken"]
+  }
+]
