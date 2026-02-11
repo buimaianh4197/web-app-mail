@@ -5,6 +5,7 @@ import shutil
 import django
 import logging
 import platform
+from dataclasses import asdict
 from pathlib import Path
 from typing import Generator
 from _pytest.nodes import Item
@@ -12,6 +13,7 @@ from playwright.sync_api import Page
 
 from tests_automation.utils.config import Config
 from tests_automation.pages.login_page import LoginPage
+from tests_automation.utils.db_handler import DBHandler
 from tests_automation.pages.mailbox_page import MailboxPage
 from tests_automation.utils.api_client import MailAPIClient
 from tests_automation.pages.register_page import AccountRegisterPage
@@ -22,6 +24,16 @@ logger = logging.getLogger(__name__)
 def api_client():
     logger.debug("[SETUP] Initializing 'MailAPIClient' fixture.")
     yield MailAPIClient()
+
+@pytest.fixture()
+def db_handler():
+    logger.debug("[SETUP] Initializing 'DBHandler' fixture.")
+    yield DBHandler()
+
+@pytest.fixture()
+def clean_db(db_handler: DBHandler):
+    yield
+    db_handler.delete_user_by_email()
 
 @pytest.fixture()
 def account_register_page(page: Page):

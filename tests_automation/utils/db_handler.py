@@ -13,7 +13,13 @@ class DBHandler:
         self.db_path = db_path or Config.DB_DIR
         logger.info(f"[DB][CONFIG] Initialized DBHandler with path: '{self.db_path}'.")
 
-    def _execute_query(self, query: str, params: tuple = (), is_select: bool = True) -> Any:
+    def _execute_query(
+            self, 
+            query: str, 
+            params: tuple = (), 
+            is_select: bool = True
+        ) -> Any:
+        
         if not self.db_path.exists():
             logger.error(f"[DB][ERROR] Database file not found at '{self.db_path}'.")
             return None
@@ -82,13 +88,13 @@ class DBHandler:
         logger.info(f"[DB][SUCCESS] Found {count} emails matching subject: '{subject_pattern}'.")
         return count
 
-    def delete_user_by_email(self, email: str) -> int:
-        logger.info(f"[DB][ACTION] Deleting user with email: '{email}'...")
+    def delete_user_by_email(self) -> int:
+        logger.info(f"[DB][ACTION] Deleting test user with pattern: '%@test.com'...")
         
-        query = "DELETE FROM auth_user WHERE email = ?"
-        count = self._execute_query(query, (email,), is_select=False)
+        query = "DELETE FROM auth_user WHERE email LIKE '%@test.com'"
+        count = self._execute_query(query, is_select=False)
         
-        logger.info(f"[DB][SUCCESS] Deleted {count} user(s) with email: '{email}'.")
+        logger.info(f"[DB][SUCCESS] Deleted {count} user(s) with pattern: '%@test.com'.")
         return count
 
     def reset_test_data(self) -> int:

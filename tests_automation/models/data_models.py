@@ -1,6 +1,6 @@
 import json
-from dataclasses import asdict
 import logging
+from dataclasses import asdict
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)

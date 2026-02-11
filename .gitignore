@@ -1,6 +1,10 @@
 venv
 .env
 scripts
+**/__pycache__/
+*.py[cod]
+*$py.class
 .env.example
-tests_automation/folder_structure.txt
 tests_automation/reports
+mail/mail/tests.py
+tests_automation/folder_structure.txt
