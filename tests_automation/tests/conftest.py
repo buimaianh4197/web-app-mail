@@ -5,9 +5,9 @@ import shutil
 import django
 import logging
 import platform
-from dataclasses import asdict
 from pathlib import Path
 from typing import Generator
+from dataclasses import asdict
 from _pytest.nodes import Item
 from playwright.sync_api import Page
 
@@ -28,12 +28,10 @@ def api_client():
 @pytest.fixture()
 def db_handler():
     logger.debug("[SETUP] Initializing 'DBHandler' fixture.")
-    yield DBHandler()
-
-@pytest.fixture()
-def clean_db(db_handler: DBHandler):
-    yield
-    db_handler.delete_user_by_email()
+    db_handler = DBHandler()
+    # db_handler.reset_test_data()
+    yield db_handler
+    db_handler.reset_test_data()
 
 @pytest.fixture()
 def account_register_page(page: Page):

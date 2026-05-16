@@ -1,3 +1,5 @@
+import json
+import allure
 import sqlite3
 import logging
 from pathlib import Path
@@ -33,16 +35,117 @@ class DBHandler:
             cursor.execute(query, params)
             
             if is_select:
-                return [dict(row) for row in cursor.fetchall()]
+                result = [dict(row) for row in cursor.fetchall()]
+
+                allure.attach(
+                    json.dumps(result, indent=4, default=str), 
+                    name="Data_DB_Query", 
+                    attachment_type=allure.attachment_type.JSON
+                )
+
             else:
                 conn.commit()
-                return cursor.rowcount
+                result = cursor.rowcount
+            return result
         except Exception as e:
             logger.error(f"[DB][ERROR] Query failed: {e}.")
             return None
         finally:
             conn.close()
 
+    def get_user_id_by_email(self, email: str) -> Optional[str]:
+        logger.info("")
+        
+        query = """
+            SELECT id 
+            FROM auth_user 
+            WHERE email = ?
+        """
+        result = self._execute_query(query, (email,))
+        
+        if result:
+            logger.info("")
+            user_id = result[0]["id"]
+            return user_id
+        logger.warning("")
+        return None
+    
+    def get_latest_sent_email_info_by_user_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        logger.info("")
+        
+        query = """
+            SELECT id, subject, body, read, archived, timestamp 
+            FROM mail_email 
+            WHERE user_id = ? AND sender_id = ? 
+            ODER BY timestamp DESC LIMIT 1
+        """
+        result = self._execute_query(query, (user_id,))
+        
+        if result:
+            logger.info("")
+            latest_email_info = result[0]
+            return latest_email_info
+        logger.warning("")
+        return None
+    
+    def get_recipient_ids_by_email_id(self, email_id: str) -> Optional[List[str]]:
+        logger.info("")
+        
+        query = """
+            SELECT user_id 
+            FROM mail_email_recipients 
+            WHERE email_id = ?
+        """
+        result = self._execute_query(query, (email_id,))
+        
+        recipient_ids = []
+        if result:
+            logger.info("")
+            for recipient_info in result:
+                recipient_ids.append(recipient_info["id"])
+            return recipient_ids
+        logger.warning("")
+        return None
+    
+    def get_recipient_emails_by_email_ids(self, email_ids: List[str]) -> Optional[List[str]]:
+        logger.info("")
+        
+        query = """
+            SELECT email 
+            FROM auth_user 
+            WHERE id IN ?
+        """
+        result = self._execute_query(query, tuple(email_ids))
+        
+        recipient_emails = []
+        if result:
+            logger.info("")
+            for recipient_info in result:
+                recipient_emails.append(recipient_info["email"])
+            return recipient_emails
+        logger.warning("")
+        return None
+    
+    def get_latest_sent_email_info(self, email: str) -> Optional[List[Dict[str, Any]]]:
+        user_id = self.get_user_id_by_email(email)
+        if user_id:
+            latest_sent_email_info = self.get_latest_sent_email_info_by_user_id(user_id)
+        if latest_sent_email_info:
+            email_id = latest_sent_email_info["id"]
+        recipient_ids = self.get_recipient_ids_by_email_id(email_id)
+        if recipient_ids:
+            recipient_emails = self.get_recipient_emails_by_email_ids(recipient_ids)
+        latest_sent_email_info_dict = {
+            "sender": email,
+            "recipients": recipient_emails,
+            "subject": latest_sent_email_info["subject"],
+            "body": latest_sent_email_info["body"],
+            "read": recipient_emails["read"],
+            "archived": latest_sent_email_info["archived"],
+            "timestamp": latest_sent_email_info["timestamp"],
+        }
+        return latest_sent_email_info_dict
+    
     def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
         logger.info(f"[DB][ACTION] Fetching user by email: '{email}'...")
         
@@ -87,6 +190,20 @@ class DBHandler:
         
         logger.info(f"[DB][SUCCESS] Found {count} emails matching subject: '{subject_pattern}'.")
         return count
+    
+    def get_recipients_of_email(self, email_id: int) -> List[str]:
+        logger.info(f"[DB][ACTION] Fetching recipients for email ID: '{email_id}'...")
+        
+        query = """
+            SELECT u.email FROM auth_user u
+            JOIN mail_email_recipients er ON u.id = er.user_id
+            WHERE er.email_id = ?
+        """
+        result = self._execute_query(query, (email_id,))
+        recipients = [row['email'] for row in result]
+        
+        logger.info(f"[DB][SUCCESS] Retrieved {len(recipients)} recipient(s) for email ID: '{email_id}'.")
+        return recipients
 
     def delete_user_by_email(self) -> int:
         logger.info(f"[DB][ACTION] Deleting test user with pattern: '%@test.com'...")
@@ -109,16 +226,4 @@ class DBHandler:
         logger.info(f"[DB][SUCCESS] Cleanup finished. '{count}' test users and their emails removed.")
         return count
 
-    def get_recipients_of_email(self, email_id: int) -> List[str]:
-        logger.info(f"[DB][ACTION] Fetching recipients for email ID: '{email_id}'...")
-        
-        query = """
-            SELECT u.email FROM auth_user u
-            JOIN mail_email_recipients er ON u.id = er.user_id
-            WHERE er.email_id = ?
-        """
-        result = self._execute_query(query, (email_id,))
-        recipients = [row['email'] for row in result]
-        
-        logger.info(f"[DB][SUCCESS] Retrieved {len(recipients)} recipient(s) for email ID: '{email_id}'.")
-        return recipients
+    

@@ -67,7 +67,7 @@ class MailAPIClient:
         request_data = json.dumps(request_info, indent=4, ensure_ascii=False)
         allure.attach(
             request_data, 
-            name="Data_Request_Payload", 
+            name="Data_Request_Info", 
             attachment_type=allure.attachment_type.JSON
         )
         logger.info("[ALLURE][SUCCESS] Attached 'Data_Request_Payload' to Allure.")
@@ -96,7 +96,7 @@ class MailAPIClient:
         
         allure.attach(
             response_info, 
-            name=f"Data_Response_{response.status_code}", 
+            name=f"Data_Response_Info", 
             attachment_type=type_allure
         )
         logger.info(f"[ALLURE][SUCCESS] Attached 'Data_Response_{response.status_code}' to Allure.")

@@ -20,9 +20,9 @@ class EmailDetailSchema(BaseModel):
 class ErrorEmailDetailsSchema(BaseModel):
     error: str
 
-class EmailList(RootModel):
+class EmailListSchema(RootModel):
     root: List[EmailDetailSchema]
 
 class ErrorEmailList(BaseModel):
-    error: str
+    error: StrictStr
 
